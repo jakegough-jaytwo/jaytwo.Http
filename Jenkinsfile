@@ -1,6 +1,6 @@
 library 'JenkinsBuilderLibrary'
 
-helper.gitHubUsername = 'jakegough'
+helper.gitHubUsername = 'jakegough-jaytwo'
 helper.gitHubRepository = 'jaytwo.Http'
 helper.gitHubTokenCredentialsId = 'github-personal-access-token-jakegough'
 helper.nuGetCredentialsId = 'nuget-org-jaytwo'
