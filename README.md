@@ -1,10 +1,10 @@
 # jaytwo.Http
 
 <p align="center">
-  <a href="https://jenkins.jaytwo.com/job/jaytwo.Http/job/master/" alt="Build Status (master)">
-    <img src="https://jenkins.jaytwo.com/buildStatus/icon?job=jaytwo.Http%2Fmaster&subject=build%20(master)" /></a>
-  <a href="https://jenkins.jaytwo.com/job/jaytwo.Http/job/develop/" alt="Build Status (develop)">
-    <img src="https://jenkins.jaytwo.com/buildStatus/icon?job=jaytwo.Http%2Fdevelop&subject=build%20(develop)" /></a>
+  <a href="https://jenkins.jaytwo.com/job/github-jakegough-jaytwo/job/jaytwo.Http/job/master/" alt="Build Status (master)">
+    <img src="https://jenkins.jaytwo.com/buildStatus/icon?job=github-jakegough-jaytwo%2Fjaytwo.Http%2Fmaster&subject=build%20(master)" /></a>
+  <a href="https://jenkins.jaytwo.com/job/github-jakegough-jaytwo/job/jaytwo.Http/job/develop/" alt="Build Status (develop)">
+    <img src="https://jenkins.jaytwo.com/buildStatus/icon?job=github-jakegough-jaytwo%2Fjaytwo.Http%2Fdevelop&subject=build%20(develop)" /></a>
 </p>
 
 <p align="center">
@@ -24,7 +24,7 @@ PM> Install-Package jaytwo.Http
 
 ## Usage
 
-TODO
+Provides an `IHttpClient` abstraction for easier testing.  This is meant for use with the `jaytwo.FluentHttp` package.
 
 ---
 
