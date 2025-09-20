@@ -1,75 +1,82 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using jaytwo.Http.Exceptions;
+using jaytwo.Http.Internal;
 
 namespace jaytwo.Http;
 
 public static class HttpResponseMessageExtensions
 {
     public static async Task<HttpResponseMessage> EnsureSuccessStatusCodeAsync(this Task<HttpResponseMessage> responseTask)
-    {
-        var httpResponse = await responseTask;
-        httpResponse.EnsureSuccessStatusCode();
-        return httpResponse;
-    }
+        => (await responseTask.ConfigureAwait(false)).EnsureSuccessStatusCode();
+
+    public static async Task<HttpResponseMessage> EnsureExpectedStatusCodeAsync(this Task<HttpResponseMessage> responseTask, HttpStatusCode statusCode)
+        => (await responseTask.ConfigureAwait(false)).EnsureExpectedStatusCode(statusCode);
 
     public static HttpResponseMessage EnsureExpectedStatusCode(this HttpResponseMessage response, HttpStatusCode statusCode)
+        => response.EnsureExpectedStatusCode(new[] { statusCode });
+
+    public static async Task<HttpResponseMessage> EnsureExpectedStatusCodeAsync(this Task<HttpResponseMessage> responseTask, params HttpStatusCode[] statusCodes)
+        => (await responseTask.ConfigureAwait(false)).EnsureExpectedStatusCode(statusCodes);
+
+    public static HttpResponseMessage EnsureExpectedStatusCode(this HttpResponseMessage response, params HttpStatusCode[] statusCodes)
     {
-        if (response.StatusCode != statusCode)
+        if (!statusCodes.Contains(response.StatusCode))
         {
-            throw new UnexpectedStatusCodeException(response.StatusCode, response);
+            throw new UnexpectedStatusCodeException(response.StatusCode);
         }
 
         return response;
     }
 
-    public static async Task EnsureExpectedStatusCodeAsync(this Task<HttpResponseMessage> responseTask, HttpStatusCode statusCode)
-    {
-        var response = await responseTask;
-        response.EnsureExpectedStatusCode(statusCode);
-    }
+    public static async Task<HttpResponseMessage> EnsureSuccessStatusCodeOrAsync(this Task<HttpResponseMessage> responseTask, HttpStatusCode statusCode)
+        => (await responseTask.ConfigureAwait(false)).EnsureSuccessStatusCodeOr(statusCode);
 
-    public static HttpResponseMessage EnsureExpectedStatusCode(this HttpResponseMessage response, HttpStatusCode statusCode, params HttpStatusCode[] additionalStatusCodes)
+    public static HttpResponseMessage EnsureSuccessStatusCodeOr(this HttpResponseMessage response, HttpStatusCode statusCode)
+        => response.EnsureSuccessStatusCodeOr(new[] { statusCode });
+
+    public static async Task<HttpResponseMessage> EnsureSuccessStatusCodeOrAsync(this Task<HttpResponseMessage> responseTask, params HttpStatusCode[] statusCodes)
+        => (await responseTask.ConfigureAwait(false)).EnsureSuccessStatusCodeOr(statusCodes);
+
+    public static HttpResponseMessage EnsureSuccessStatusCodeOr(this HttpResponseMessage response, params HttpStatusCode[] statusCodes)
+        => response.EnsureSuccessStatusCodeOr(x => statusCodes.Contains(x.StatusCode));
+
+    public static async Task<HttpResponseMessage> EnsureSuccessStatusCodeOrAsync(this Task<HttpResponseMessage> responseTask, Func<HttpResponseMessage, bool> isAdditionallyAllowed)
+        => (await responseTask.ConfigureAwait(false)).EnsureSuccessStatusCodeOr(isAdditionallyAllowed);
+
+    public static HttpResponseMessage EnsureSuccessStatusCodeOr(this HttpResponseMessage response, Func<HttpResponseMessage, bool> isAdditionallyAllowed)
     {
-        if (response.StatusCode != statusCode && !additionalStatusCodes.Contains(response.StatusCode))
+        if (response is null)
         {
-            throw new UnexpectedStatusCodeException(response.StatusCode, response);
+            throw new ArgumentNullException(nameof(response));
         }
 
-        return response;
-    }
+        if (isAdditionallyAllowed is null)
+        {
+            throw new ArgumentNullException(nameof(isAdditionallyAllowed));
+        }
 
-    public static async Task EnsureExpectedStatusCodeAsync(this Task<HttpResponseMessage> responseTask, HttpStatusCode statusCode, params HttpStatusCode[] additionalStatusCodes)
-    {
-        var response = await responseTask;
-        response.EnsureExpectedStatusCode(statusCode, additionalStatusCodes);
+        if (response.IsSuccessStatusCode || isAdditionallyAllowed(response))
+        {
+            return response;
+        }
+
+        throw new UnexpectedStatusCodeException(response.StatusCode);
     }
 
     public static async Task<T> AsAnonymousTypeAsync<T>(this Task<HttpResponseMessage> httpResponseTask, T anonymousPrototype)
-    {
-        var httpResponse = await httpResponseTask;
-        var result = await httpResponse.AsAnonymousTypeAsync(anonymousPrototype);
-        return result;
-    }
+        => await (await httpResponseTask.ConfigureAwait(false)).AsAnonymousTypeAsync<T>(anonymousPrototype);
 
-    public static Task<T> AsAnonymousTypeAsync<T>(this HttpResponseMessage httpResponse, T anonymousPrototype)
-    {
-        return httpResponse.AsAsync<T>();
-    }
+    public static async Task<T> AsAnonymousTypeAsync<T>(this HttpResponseMessage httpResponse, T anonymousPrototype)
+        => await httpResponse.AsAsync<T>();
 
     public static async Task<byte[]> AsByteArrayAsync(this Task<HttpResponseMessage> httpResponseTask)
-    {
-        var httpResponse = await httpResponseTask;
-        var result = await httpResponse.AsByteArrayAsync();
-        return result;
-    }
+        => await (await httpResponseTask.ConfigureAwait(false)).AsByteArrayAsync();
 
     public static async Task<byte[]> AsByteArrayAsync(this HttpResponseMessage httpResponse)
     {
@@ -80,11 +87,7 @@ public static class HttpResponseMessageExtensions
     }
 
     public static async Task<Stream> AsStreamAsync(this Task<HttpResponseMessage> httpResponseTask)
-    {
-        var httpResponse = await httpResponseTask;
-        var result = await httpResponse.AsStreamAsync();
-        return result;
-    }
+        => await (await httpResponseTask.ConfigureAwait(false)).AsStreamAsync();
 
     public static async Task<Stream> AsStreamAsync(this HttpResponseMessage httpResponse)
     {
@@ -93,11 +96,7 @@ public static class HttpResponseMessageExtensions
     }
 
     public static async Task<string> AsStringAsync(this Task<HttpResponseMessage> httpResponseTask)
-    {
-        var httpResponse = await httpResponseTask;
-        var result = await httpResponse.AsStringAsync();
-        return result;
-    }
+        => await (await httpResponseTask.ConfigureAwait(false)).AsStringAsync();
 
     public static async Task<string> AsStringAsync(this HttpResponseMessage httpResponse)
     {
@@ -137,11 +136,7 @@ public static class HttpResponseMessageExtensions
     }
 
     public static async Task<T> AsAsync<T>(this Task<HttpResponseMessage> httpResponseTask)
-    {
-        var httpResponse = await httpResponseTask;
-        var result = await httpResponse.AsAsync<T>();
-        return result;
-    }
+        => await (await httpResponseTask.ConfigureAwait(false)).AsAsync<T>();
 
     public static async Task<T> ParseWithAsync<T>(this HttpResponseMessage httpResponse, Func<string, T> parseDelegate)
     {
@@ -150,11 +145,7 @@ public static class HttpResponseMessageExtensions
     }
 
     public static async Task<T> ParseWithAsync<T>(this Task<HttpResponseMessage> httpResponseTask, Func<string, T> parseDelegate)
-    {
-        var httpResponse = await httpResponseTask;
-        var result = await httpResponse.ParseWithAsync<T>(parseDelegate);
-        return result;
-    }
+        => await (await httpResponseTask.ConfigureAwait(false)).ParseWithAsync<T>(parseDelegate);
 
     public static string GetHeaderValue(this HttpResponseMessage httpResponseMessage, string key)
     {

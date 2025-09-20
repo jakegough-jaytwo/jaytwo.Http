@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using jaytwo.Http.Formatting;
+using jaytwo.Http.Internal;
 
 namespace jaytwo.Http;
 

@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using jaytwo.FluentUri;
 using jaytwo.Http.Formatting;
+using jaytwo.Http.Internal;
 using jaytwo.UrlHelper;
 
 namespace jaytwo.Http;

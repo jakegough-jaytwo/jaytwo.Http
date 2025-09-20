@@ -1,6 +1,6 @@
 using System;
 
-namespace jaytwo.Http;
+namespace jaytwo.Http.Internal;
 
 internal class InclusionRuleHelper
 {

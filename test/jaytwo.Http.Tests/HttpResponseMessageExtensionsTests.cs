@@ -90,11 +90,8 @@ public class HttpResponseMessageExtensionsTests
         var response = new HttpResponseMessage();
         response.StatusCode = HttpStatusCode.OK;
 
-        // act
-        var exception = Assert.Throws<UnexpectedStatusCodeException>(() => response.EnsureExpectedStatusCode(HttpStatusCode.NotFound));
-
-        // assert (that it doesn't throw an exception)
-        Assert.NotNull(response);
+        // act & assert
+        Assert.Throws<UnexpectedStatusCodeException>(() => response.EnsureExpectedStatusCode(HttpStatusCode.NotFound));
     }
 
     [Fact]
@@ -104,11 +101,8 @@ public class HttpResponseMessageExtensionsTests
         var response = new HttpResponseMessage();
         response.StatusCode = HttpStatusCode.OK;
 
-        // act
-        var exception = Assert.Throws<UnexpectedStatusCodeException>(() => response.EnsureExpectedStatusCode(HttpStatusCode.NotFound, HttpStatusCode.BadGateway));
-
-        // assert (that it doesn't throw an exception)
-        Assert.NotNull(response);
+        // act & assert
+        Assert.Throws<UnexpectedStatusCodeException>(() => response.EnsureExpectedStatusCode(HttpStatusCode.NotFound, HttpStatusCode.BadGateway));
     }
 
     [Fact]
@@ -120,25 +114,56 @@ public class HttpResponseMessageExtensionsTests
         var task = Task.FromResult(response);
 
         // act
-        await task.EnsureExpectedStatusCodeAsync(HttpStatusCode.NotFound);
+        var ensured = await task.EnsureExpectedStatusCodeAsync(HttpStatusCode.NotFound);
 
         // assert (that it doesn't throw an exception)
-        Assert.NotNull(response);
+        Assert.NotNull(ensured);
     }
 
     [Fact]
     public async Task EnsureExpectedStatusCodeAsync_throws_exception()
     {
         // arrange
+        var responseStatusCode = HttpStatusCode.OK;
+        var inputStatusCode = HttpStatusCode.NotFound;
         var response = new HttpResponseMessage();
-        response.StatusCode = HttpStatusCode.OK;
+        response.StatusCode = responseStatusCode;
+        var task = Task.FromResult(response);
+
+        // act & assert
+        var exception = await Assert.ThrowsAsync<UnexpectedStatusCodeException>(() => task.EnsureExpectedStatusCodeAsync(inputStatusCode));
+        Assert.Equal(responseStatusCode, exception.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.OK, HttpStatusCode.NotFound)]
+    [InlineData(HttpStatusCode.NotFound, HttpStatusCode.NotFound)]
+    public async Task EnsureSuccessStatusCodeOrAsync_does_not_throw_exception(HttpStatusCode responseStatusCode, HttpStatusCode inputStatusCode)
+    {
+        // arrange
+        var response = new HttpResponseMessage();
+        response.StatusCode = responseStatusCode;
         var task = Task.FromResult(response);
 
         // act
-        var exception = await Assert.ThrowsAsync<UnexpectedStatusCodeException>(() => task.EnsureExpectedStatusCodeAsync(HttpStatusCode.NotFound));
+        var ensured = await task.EnsureSuccessStatusCodeOrAsync(inputStatusCode);
 
         // assert (that it doesn't throw an exception)
-        Assert.NotNull(response);
+        Assert.NotNull(ensured);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.BadGateway, HttpStatusCode.NotFound)]
+    public async Task EnsureSuccessStatusCodeOrAsync_throws_exception(HttpStatusCode responseStatusCode, HttpStatusCode inputStatusCode)
+    {
+        // arrange
+        var response = new HttpResponseMessage();
+        response.StatusCode = responseStatusCode;
+        var task = Task.FromResult(response);
+
+        // act & assert
+        var exception = await Assert.ThrowsAsync<UnexpectedStatusCodeException>(() => task.EnsureSuccessStatusCodeOrAsync(inputStatusCode));
+        Assert.Equal(responseStatusCode, exception.StatusCode);
     }
 
     [Fact]

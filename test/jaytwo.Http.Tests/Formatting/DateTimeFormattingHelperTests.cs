@@ -2,7 +2,7 @@ using System;
 using jaytwo.Http.Formatting;
 using Xunit;
 
-namespace jaytwo.Http.Tests;
+namespace jaytwo.Http.Tests.Formatting;
 
 public class DateTimeFormattingHelperTests
 {

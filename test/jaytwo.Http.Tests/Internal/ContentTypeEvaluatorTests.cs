@@ -1,8 +1,9 @@
 using System;
 using System.Net.Http.Headers;
+using jaytwo.Http.Internal;
 using Xunit;
 
-namespace jaytwo.Http.Tests;
+namespace jaytwo.Http.Tests.Internal;
 
 public class ContentTypeEvaluatorTests
 {

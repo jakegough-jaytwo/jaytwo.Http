@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Net.Http.Headers;
 
-namespace jaytwo.Http;
+namespace jaytwo.Http.Internal;
 
 internal static class ContentTypeEvaluator
 {

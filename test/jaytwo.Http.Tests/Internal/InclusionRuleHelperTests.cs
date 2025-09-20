@@ -1,7 +1,8 @@
 using System;
+using jaytwo.Http.Internal;
 using Xunit;
 
-namespace jaytwo.Http.Tests;
+namespace jaytwo.Http.Tests.Internal;
 
 public class InclusionRuleHelperTests
 {

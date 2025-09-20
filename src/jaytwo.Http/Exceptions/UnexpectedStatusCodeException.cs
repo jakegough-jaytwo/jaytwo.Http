@@ -4,18 +4,25 @@ using System.Net.Http;
 
 namespace jaytwo.Http.Exceptions;
 
-public class UnexpectedStatusCodeException : Exception
+public class UnexpectedStatusCodeException : HttpRequestException
 {
-    public UnexpectedStatusCodeException(HttpStatusCode statusCode, HttpResponseMessage response)
+    // TODO: ActualStatusCode, ExpectedStatusCodes
+
+    public UnexpectedStatusCodeException(HttpStatusCode statusCode)
+#if NET5_0_OR_GREATER
+        : base(GetMessage(statusCode), null, statusCode)
+#else
         : base(GetMessage(statusCode))
+#endif
     {
-        Response = response;
-        StatusCode = response.StatusCode;
+#if !NET5_0_OR_GREATER
+        StatusCode = statusCode;
+#endif
     }
 
+#if !NET5_0_OR_GREATER
     public HttpStatusCode StatusCode { get; }
-
-    public HttpResponseMessage Response { get; }
+#endif
 
     private static string GetMessage(HttpStatusCode statusCode)
     {

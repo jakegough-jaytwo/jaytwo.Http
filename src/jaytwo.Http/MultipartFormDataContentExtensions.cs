@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using jaytwo.Http.Formatting;
+using jaytwo.Http.Internal;
 
 namespace jaytwo.Http;
 
