@@ -13,6 +13,7 @@
   <ItemGroup>
     <PackageReference Include="jaytwo.MimeHelper" Version="0.1.3" />
     <PackageReference Include="jaytwo.SolutionResolution" Version="0.1.1" />
+    <PackageReference Include="MartinCostello.Logging.XUnit" Version="0.6.0" />
   </ItemGroup>
 
 </Project>

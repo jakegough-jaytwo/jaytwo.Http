@@ -79,6 +79,8 @@ public class LoggingDelegatingHandler : DelegatingHandler
 
     private class LogMessageBuilder
     {
+        private const LogLevel RequestResponseLogLevel = LogLevel.Information;
+
         private readonly ILogger _logger;
         private readonly List<string> _parts = new List<string>();
         private readonly List<object> _parameters = new List<object>();
@@ -90,8 +92,7 @@ public class LoggingDelegatingHandler : DelegatingHandler
 
         public void LogRequest(string shortRequestId, HttpRequestMessage request)
         {
-            var logLevel = LogLevel.Debug;
-            if (!_logger.IsEnabled(logLevel))
+            if (!_logger.IsEnabled(RequestResponseLogLevel))
             {
                 return;
             }
@@ -103,7 +104,7 @@ public class LoggingDelegatingHandler : DelegatingHandler
                 request.Method,
                 request.RequestUri?.OriginalString ?? string.Empty);
 
-            var requestContentType = request.Content?.Headers.ContentType?.ToString();
+            var requestContentType = request.Content?.Headers.ContentType?.MediaType;
             if (!string.IsNullOrEmpty(requestContentType))
             {
                 Append("{RequestContentType}", requestContentType);
@@ -115,7 +116,7 @@ public class LoggingDelegatingHandler : DelegatingHandler
                 Append("{RequestContentLength:n0} bytes", requestContentLength.Value);
             }
 
-            Write(HttpClientLogEvents.Request, logLevel);
+            Write(HttpClientLogEvents.Request, RequestResponseLogLevel);
         }
 
         public void LogResponse(string shortRequestId, TimeSpan elapsed, HttpResponseMessage response)
@@ -134,7 +135,7 @@ public class LoggingDelegatingHandler : DelegatingHandler
                 (int)response.StatusCode,
                 response.StatusCode.ToString("G"));
 
-            var contentType = response.Content?.Headers?.ContentType?.ToString();
+            var contentType = response.Content?.Headers?.ContentType?.MediaType;
             if (!string.IsNullOrEmpty(contentType))
             {
                 Append("{ResponseContentType}", contentType);
@@ -151,6 +152,16 @@ public class LoggingDelegatingHandler : DelegatingHandler
 
         public void LogException(string shortRequestId, TimeSpan elapsed, Exception exception)
         {
+            // TODO: this reads funny because it says almost the same thing as LogError by providing the error but not quite the same..
+            /*
+             *  [9637358] ERR: (8ms) TaskCanceledException A task was canceled.
+             *  System.Threading.Tasks.TaskCanceledException: A task was canceled.
+             *     at System.Threading.Tasks.TaskCompletionSourceWithCancellation`1.WaitWithCancellationAsync(CancellationToken cancellationToken)
+             *     at System.Net.Http.HttpConnectionPool.SendWithVersionDetectionAndRetryAsync(HttpRequestMessage request, Boolean async, Boolean doRequestAuth, CancellationToken cancellationToken)
+             *     at System.Net.Http.RedirectHandler.SendAsync(HttpRequestMessage request, Boolean async, CancellationToken cancellationToken)
+             *     at jaytwo.Http.Handlers.LoggingDelegatingHandler.SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) in C:\jake\git\jaytwo.Http\src\jaytwo.Http\Handlers\LoggingDelegatingHandler.cs:line 40
+             */
+
             Append(
                 "[{ShortRequestId}] {EventType}: ({ElapsedMilliseconds:n0}ms) {ExceptionType} {ExceptionMessage}",
                 shortRequestId,
@@ -200,7 +211,7 @@ public class LoggingDelegatingHandler : DelegatingHandler
             }
             else
             {
-                return LogLevel.Information;
+                return RequestResponseLogLevel;
             }
         }
     }

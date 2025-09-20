@@ -23,6 +23,13 @@ public class HttpClientBuilder
     {
     }
 
+    public static HttpClient Build(Action<HttpClientBuilder> clientBuilder)
+    {
+        var httpClientBuilder = new HttpClientBuilder();
+        clientBuilder.Invoke(httpClientBuilder);
+        return httpClientBuilder.Build();
+    }
+
     public HttpClient Build(bool disposeHandler = true)
     {
         var handlerPipeline = BuildHandlerPipeline();
