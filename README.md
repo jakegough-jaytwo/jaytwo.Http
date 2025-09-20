@@ -24,7 +24,7 @@ PM> Install-Package jaytwo.Http
 
 ## Usage
 
-Provides an `IHttpClient` abstraction for easier testing.  This is meant for use with the `jaytwo.FluentHttp` package.
+TODO
 
 ---
 
