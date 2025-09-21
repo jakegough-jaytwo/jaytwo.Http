@@ -160,12 +160,8 @@ public static class HttpResponseMessageExtensions
         => await (await httpResponseTask.ConfigureAwait(false)).ParseWithAsync<T>(parseDelegate);
 
     public static string GetHeaderValue(this HttpResponseMessage httpResponseMessage, string key)
-    {
-        return httpResponseMessage.Headers.GetHeaderValue(key) ?? httpResponseMessage.Content?.Headers.GetHeaderValue(key);
-    }
+        => httpResponseMessage.Headers.GetHeaderValue(key) ?? httpResponseMessage.Content?.Headers.GetHeaderValue(key);
 
     public static string GetHeaderValue(this HttpResponseMessage httpResponseMessage, string key, StringComparison stringComparison)
-    {
-        return httpResponseMessage.Headers.GetHeaderValue(key, stringComparison) ?? httpResponseMessage.Content?.Headers.GetHeaderValue(key, stringComparison);
-    }
+        => httpResponseMessage.Headers.GetHeaderValue(key, stringComparison) ?? httpResponseMessage.Content?.Headers.GetHeaderValue(key, stringComparison);
 }

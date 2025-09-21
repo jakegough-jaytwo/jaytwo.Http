@@ -10,9 +10,7 @@ public static class HttpHeadersExtensions
         => GetHeaderValue(httpHeaders, key, StringComparison.OrdinalIgnoreCase);
 
     public static string? GetHeaderValue(this HttpHeaders httpHeaders, string key, StringComparison stringComparison)
-    {
-        return httpHeaders.FirstOrDefault(x => string.Equals(x.Key, key, stringComparison)).Value?.FirstOrDefault();
-    }
+        => httpHeaders.FirstOrDefault(x => string.Equals(x.Key, key, stringComparison)).Value?.FirstOrDefault();
 
     internal static void AddSmartly(this HttpHeaders httpHeaders, string name, string? value)
     {

@@ -68,14 +68,10 @@ public static class HttpRequestMessageExtensions
     }
 
     public static HttpRequestMessage WithHeaderAcceptApplicationJson(this HttpRequestMessage httpRequestMessage)
-    {
-        return httpRequestMessage.WithHeaderAccept("application/json");
-    }
+        => httpRequestMessage.WithHeaderAccept("application/json");
 
     public static HttpRequestMessage WithHeaderAcceptTextXml(this HttpRequestMessage httpRequestMessage)
-    {
-        return httpRequestMessage.WithHeaderAccept("text/xml");
-    }
+        => httpRequestMessage.WithHeaderAccept("text/xml");
 
     public static HttpRequestMessage WithHeaderAcceptCharset(this HttpRequestMessage httpRequestMessage, string value)
     {
@@ -206,9 +202,7 @@ public static class HttpRequestMessageExtensions
     }
 
     public static HttpRequestMessage WithHeaderPragmaNoCache(this HttpRequestMessage httpRequestMessage)
-    {
-        return httpRequestMessage.WithHeaderPragma("no-cache");
-    }
+        => httpRequestMessage.WithHeaderPragma("no-cache");
 
     public static HttpRequestMessage WithHeaderRange(this HttpRequestMessage httpRequestMessage, long? from, long? to)
     {
@@ -264,14 +258,10 @@ public static class HttpRequestMessageExtensions
     }
 
     public static HttpRequestMessage WithUri(this HttpRequestMessage httpRequestMessage, string pathOrUri, UriKind uriKild = UriKind.RelativeOrAbsolute)
-    {
-        return httpRequestMessage.WithUri(new Uri(pathOrUri, uriKild));
-    }
+        => httpRequestMessage.WithUri(new Uri(pathOrUri, uriKild));
 
     public static HttpRequestMessage WithUri(this HttpRequestMessage httpRequestMessage, string pathFormat, params object[] formatArgs)
-    {
-        return httpRequestMessage.WithUri(Url.Format(pathFormat, formatArgs));
-    }
+        => httpRequestMessage.WithUri(Url.Format(pathFormat, formatArgs));
 
     public static HttpRequestMessage WithUriPath(this HttpRequestMessage httpRequestMessage, string path)
     {
@@ -286,9 +276,7 @@ public static class HttpRequestMessageExtensions
     }
 
     public static HttpRequestMessage WithUriPath(this HttpRequestMessage httpRequestMessage, string pathFormat, params object[] formatArgs)
-    {
-        return httpRequestMessage.WithUriPath(Url.Format(pathFormat, formatArgs));
-    }
+        => httpRequestMessage.WithUriPath(Url.Format(pathFormat, formatArgs));
 
     public static HttpRequestMessage WithUriQuery(this HttpRequestMessage httpRequestMessage, string data)
     {

@@ -114,16 +114,10 @@ public static class MultipartFormDataContentExtensions
     }
 
     public static MultipartFormDataContent WithStreamContent(this MultipartFormDataContent multipartFormDataContent, string name, Stream stream)
-    {
-        var content = new StreamContent(stream);
-        return multipartFormDataContent.WithContent(content, name);
-    }
+        => multipartFormDataContent.WithContent(new StreamContent(stream), name);
 
     public static MultipartFormDataContent WithStreamContent(this MultipartFormDataContent multipartFormDataContent, string name, string fileName, Stream stream)
-    {
-        var content = new StreamContent(stream);
-        return multipartFormDataContent.WithContent(content, name, fileName);
-    }
+        => multipartFormDataContent.WithContent(new StreamContent(stream), name, fileName);
 
     public static MultipartFormDataContent WithByteArrayContent(this MultipartFormDataContent multipartFormDataContent, string name, byte[] bytes, InclusionRule inclusionRule = InclusionRule.IncludeAlways)
     {
