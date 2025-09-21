@@ -1,5 +1,5 @@
 using System;
-using jaytwo.Http.Handlers;
+using jaytwo.Http.Handlers.Logging;
 using Microsoft.Extensions.Logging;
 
 namespace jaytwo.Http;

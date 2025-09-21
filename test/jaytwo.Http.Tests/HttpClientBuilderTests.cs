@@ -187,7 +187,7 @@ public class HttpClientBuilderTests
             .BuildHandlerPipeline();
 
         // assert
-        Assert.Same(mockSecondDelegatingHandler.Object.InnerHandler, mockPrimaryHandler.Object);
-        Assert.Same(mockFirstDelegatingHandler.Object.InnerHandler, mockSecondDelegatingHandler.Object);
+        Assert.Same(mockSecondDelegatingHandler.Object.InnerHandler, mockFirstDelegatingHandler.Object);
+        Assert.Same(mockFirstDelegatingHandler.Object.InnerHandler, mockPrimaryHandler.Object);
     }
 }

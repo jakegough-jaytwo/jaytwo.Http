@@ -8,7 +8,7 @@ namespace jaytwo.Http;
 public static class HttpClientExtensions
 {
     private const HttpCompletionOption DefaultHttpCompletionOption = HttpCompletionOption.ResponseContentRead;
-    private const bool DefaultEnsureSuccessStatusCode = true;
+    private const bool DefaultEnsureSuccessStatusCode = false;
 
     public static async Task<HttpResponseMessage> SendAsync(
         this HttpClient httpClient,
@@ -16,7 +16,7 @@ public static class HttpClientExtensions
         CancellationToken cancellationToken)
         => await SendAsync(
             httpClient,
-            requestBuilder: RequestBuilderToAsync(requestBuilder),
+            requestBuilder: ToAsyncMethod(requestBuilder),
             cancellationToken: cancellationToken);
 
     public static async Task<HttpResponseMessage> SendAsync(
@@ -27,7 +27,7 @@ public static class HttpClientExtensions
         CancellationToken cancellationToken = default)
         => await SendAsync(
             httpClient,
-            requestBuilder: RequestBuilderToAsync(requestBuilder),
+            requestBuilder: ToAsyncMethod(requestBuilder),
             completionOption: completionOption,
             ensureSuccessStatusCode: ensureSuccessStatusCode,
             cancellationToken: cancellationToken);
@@ -70,7 +70,7 @@ public static class HttpClientExtensions
         return response;
     }
 
-    private static Func<HttpRequestMessage, Task> RequestBuilderToAsync(Action<HttpRequestMessage> requestBuilder)
+    private static Func<T, Task> ToAsyncMethod<T>(Action<T> requestBuilder)
         => request =>
         {
             requestBuilder.Invoke(request);

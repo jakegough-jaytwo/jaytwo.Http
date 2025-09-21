@@ -21,10 +21,16 @@ public static class HttpResponseMessageExtensions
     public static HttpResponseMessage EnsureExpectedStatusCode(this HttpResponseMessage response, HttpStatusCode statusCode)
         => response.EnsureExpectedStatusCode(new[] { statusCode });
 
-    public static async Task<HttpResponseMessage> EnsureExpectedStatusCodeAsync(this Task<HttpResponseMessage> responseTask, params HttpStatusCode[] statusCodes)
+    public static async Task<HttpResponseMessage> EnsureExpectedStatusCodeAsync(this Task<HttpResponseMessage> responseTask, HttpStatusCode statusCode, params HttpStatusCode[] moreStatusCodes)
+        => (await responseTask.ConfigureAwait(false)).EnsureExpectedStatusCode(statusCode, moreStatusCodes);
+
+    public static HttpResponseMessage EnsureExpectedStatusCode(this HttpResponseMessage response, HttpStatusCode statusCode, params HttpStatusCode[] moreStatusCodes)
+        => response.EnsureExpectedStatusCode(moreStatusCodes.Prepend(statusCode).ToArray());
+
+    public static async Task<HttpResponseMessage> EnsureExpectedStatusCodeAsync(this Task<HttpResponseMessage> responseTask, HttpStatusCode[] statusCodes)
         => (await responseTask.ConfigureAwait(false)).EnsureExpectedStatusCode(statusCodes);
 
-    public static HttpResponseMessage EnsureExpectedStatusCode(this HttpResponseMessage response, params HttpStatusCode[] statusCodes)
+    public static HttpResponseMessage EnsureExpectedStatusCode(this HttpResponseMessage response, HttpStatusCode[] statusCodes)
     {
         if (!statusCodes.Contains(response.StatusCode))
         {
@@ -34,16 +40,22 @@ public static class HttpResponseMessageExtensions
         return response;
     }
 
+    public static async Task<HttpResponseMessage> EnsureSuccessStatusCodeOrAsync(this Task<HttpResponseMessage> responseTask, HttpStatusCode statusCode, params HttpStatusCode[] moreStatusCodes)
+        => (await responseTask.ConfigureAwait(false)).EnsureSuccessStatusCodeOr(statusCode, moreStatusCodes);
+
+    public static HttpResponseMessage EnsureSuccessStatusCodeOr(this HttpResponseMessage response, HttpStatusCode statusCode, params HttpStatusCode[] moreStatusCodes)
+        => response.EnsureSuccessStatusCodeOr(moreStatusCodes.Prepend(statusCode).ToArray());
+
     public static async Task<HttpResponseMessage> EnsureSuccessStatusCodeOrAsync(this Task<HttpResponseMessage> responseTask, HttpStatusCode statusCode)
         => (await responseTask.ConfigureAwait(false)).EnsureSuccessStatusCodeOr(statusCode);
 
     public static HttpResponseMessage EnsureSuccessStatusCodeOr(this HttpResponseMessage response, HttpStatusCode statusCode)
         => response.EnsureSuccessStatusCodeOr(new[] { statusCode });
 
-    public static async Task<HttpResponseMessage> EnsureSuccessStatusCodeOrAsync(this Task<HttpResponseMessage> responseTask, params HttpStatusCode[] statusCodes)
+    public static async Task<HttpResponseMessage> EnsureSuccessStatusCodeOrAsync(this Task<HttpResponseMessage> responseTask, HttpStatusCode[] statusCodes)
         => (await responseTask.ConfigureAwait(false)).EnsureSuccessStatusCodeOr(statusCodes);
 
-    public static HttpResponseMessage EnsureSuccessStatusCodeOr(this HttpResponseMessage response, params HttpStatusCode[] statusCodes)
+    public static HttpResponseMessage EnsureSuccessStatusCodeOr(this HttpResponseMessage response, HttpStatusCode[] statusCodes)
         => response.EnsureSuccessStatusCodeOr(x => statusCodes.Contains(x.StatusCode));
 
     public static async Task<HttpResponseMessage> EnsureSuccessStatusCodeOrAsync(this Task<HttpResponseMessage> responseTask, Func<HttpResponseMessage, bool> isAdditionallyAllowed)

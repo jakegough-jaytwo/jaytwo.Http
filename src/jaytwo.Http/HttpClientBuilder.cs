@@ -4,6 +4,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Security;
+using jaytwo.Http.Handlers.Authentication;
+using jaytwo.Http.Handlers.RequestTimeout;
 
 namespace jaytwo.Http;
 
@@ -29,6 +31,19 @@ public class HttpClientBuilder
         clientBuilder.Invoke(httpClientBuilder);
         return httpClientBuilder.Build();
     }
+
+    public static HttpClient BuildDefault()
+        => BuildDefault(_ => { });
+
+    public static HttpClient BuildDefault(Action<HttpClientBuilder> clientBuilder)
+        => Build(builder =>
+        {
+            builder
+                .WithDelegatingHandler(() => new AuthenticationDelegatingHandler())
+                .WithDelegatingHandler(() => new RequestTimeoutDelegatingHandler());
+
+            clientBuilder.Invoke(builder);
+        });
 
     public HttpClient Build(bool disposeHandler = true)
     {
@@ -125,7 +140,7 @@ public class HttpClientBuilder
         var primaryHandler = BuildPrimaryHandler();
 
         HttpMessageHandler result = primaryHandler;
-        foreach (var handlerFactory in _delegatingHandlerFactories.AsEnumerable().Reverse())
+        foreach (var handlerFactory in _delegatingHandlerFactories)
         {
             var outerHandler = handlerFactory.Invoke();
             outerHandler.InnerHandler = result;
@@ -174,7 +189,6 @@ public class HttpClientBuilder
 
         return ConfigureSslOptions(o => o.RemoteCertificateValidationCallback = callback);
     }
-
 #else
     public HttpClientBuilder WithRemoteCertificateValidationCallback(RemoteCertificateValidationCallback callback)
     {

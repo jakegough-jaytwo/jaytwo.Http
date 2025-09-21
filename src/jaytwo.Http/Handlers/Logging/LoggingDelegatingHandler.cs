@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace jaytwo.Http.Handlers;
+namespace jaytwo.Http.Handlers.Logging;
 
 public class LoggingDelegatingHandler : DelegatingHandler
 {

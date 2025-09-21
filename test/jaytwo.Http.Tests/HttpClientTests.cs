@@ -21,7 +21,7 @@ namespace jaytwo.Http.Tests
         public HttpClientTests(ITestOutputHelper output)
         {
             _output = output;
-            _httpClient = new HttpClientBuilder().WithBaseAddress(HttpBinUrl).Build();
+            _httpClient = HttpClientBuilder.BuildDefault(x => x.WithBaseAddress(HttpBinUrl));
         }
 
         [Fact]
@@ -227,8 +227,7 @@ namespace jaytwo.Http.Tests
                     request
                         .WithMethod(HttpMethod.Delete)
                         .WithUriPath("/get");
-                },
-                ensureSuccessStatusCode: false);
+                });
 
             // act & assert
             var exception = Assert.Throws<UnexpectedStatusCodeException>(() => response.EnsureExpectedStatusCode(HttpStatusCode.OK));
@@ -247,8 +246,7 @@ namespace jaytwo.Http.Tests
                     request
                         .WithMethod(HttpMethod.Delete)
                         .WithUriPath("/get");
-                },
-                ensureSuccessStatusCode: false);
+                });
 
             // act
             response.EnsureExpectedStatusCode(HttpStatusCode.MethodNotAllowed);

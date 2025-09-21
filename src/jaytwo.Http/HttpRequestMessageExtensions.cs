@@ -7,7 +7,11 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using jaytwo.FluentUri;
+using jaytwo.Http.Authentication;
 using jaytwo.Http.Formatting;
+using jaytwo.Http.Handlers;
+using jaytwo.Http.Handlers.Authentication;
+using jaytwo.Http.Handlers.RequestTimeout;
 using jaytwo.Http.Internal;
 using jaytwo.UrlHelper;
 
@@ -22,9 +26,7 @@ public static class HttpRequestMessageExtensions
     }
 
     public static HttpRequestMessage WithMethod(this HttpRequestMessage httpRequestMessage, string method)
-    {
-        return httpRequestMessage.WithMethod(new HttpMethod(method));
-    }
+        => httpRequestMessage.WithMethod(new HttpMethod(method));
 
     public static HttpRequestMessage WithHeader(this HttpRequestMessage httpRequestMessage, string name, string? value, InclusionRule inclusionRule = InclusionRule.IncludeAlways)
     {
@@ -253,9 +255,7 @@ public static class HttpRequestMessageExtensions
     }
 
     public static HttpRequestMessage WithBaseUri(this HttpRequestMessage httpRequestMessage, string pathOrUri, UriKind uriKild = UriKind.RelativeOrAbsolute)
-    {
-        return httpRequestMessage.WithBaseUri(new Uri(pathOrUri, uriKild));
-    }
+        => httpRequestMessage.WithBaseUri(new Uri(pathOrUri, uriKild));
 
     public static HttpRequestMessage WithUri(this HttpRequestMessage httpRequestMessage, Uri uri)
     {
@@ -303,29 +303,19 @@ public static class HttpRequestMessageExtensions
     }
 
     public static HttpRequestMessage WithUriQuery(this HttpRequestMessage httpRequestMessage, object data)
-    {
-        return httpRequestMessage.WithUriQuery(QueryString.Serialize(data));
-    }
+        => httpRequestMessage.WithUriQuery(QueryString.Serialize(data));
 
     public static HttpRequestMessage WithUriQuery(this HttpRequestMessage httpRequestMessage, IDictionary<string, object> data)
-    {
-        return httpRequestMessage.WithUriQuery(QueryString.Serialize(data));
-    }
+        => httpRequestMessage.WithUriQuery(QueryString.Serialize(data));
 
     public static HttpRequestMessage WithUriQuery(this HttpRequestMessage httpRequestMessage, IDictionary<string, string[]> data)
-    {
-        return httpRequestMessage.WithUriQuery(QueryString.Serialize(data));
-    }
+        => httpRequestMessage.WithUriQuery(QueryString.Serialize(data));
 
     public static HttpRequestMessage WithUriQuery(this HttpRequestMessage httpRequestMessage, IDictionary<string, object[]> data)
-    {
-        return httpRequestMessage.WithUriQuery(QueryString.Serialize(data));
-    }
+        => httpRequestMessage.WithUriQuery(QueryString.Serialize(data));
 
     public static HttpRequestMessage WithUriQuery(this HttpRequestMessage httpRequestMessage, IDictionary<string, string> data)
-    {
-        return httpRequestMessage.WithUriQuery(QueryString.Serialize(data));
-    }
+        => httpRequestMessage.WithUriQuery(QueryString.Serialize(data));
 
     public static HttpRequestMessage WithUriQueryParameter(this HttpRequestMessage httpRequestMessage, string key, string? value, InclusionRule inclusionRule = InclusionRule.IncludeAlways)
     {
@@ -521,6 +511,45 @@ public static class HttpRequestMessageExtensions
 
     public static string? GetHeaderValue(this HttpRequestMessage httpRequestMessage, string key, StringComparison stringComparison)
         => httpRequestMessage.Headers.GetHeaderValue(key, stringComparison) ?? httpRequestMessage.Content?.Headers.GetHeaderValue(key, stringComparison);
+
+    public static HttpRequestMessage WithTimeout(this HttpRequestMessage httpRequestMessage, TimeSpan timeout)
+        => httpRequestMessage.WithOptionOrProperty(new RequestTimeoutOption(timeout));
+
+    public static HttpRequestMessage WithBasicAuthentication(this HttpRequestMessage httpRequestMessage, string username, string password)
+        => httpRequestMessage.WithAuthentication(new BasicAuthenticationProvider(username, password));
+
+    public static HttpRequestMessage WithBearerAuthentication(this HttpRequestMessage httpRequestMessage, string token)
+        => httpRequestMessage.WithAuthentication(new BearerAuthenticationProvider(token));
+
+    public static HttpRequestMessage WithBearerAuthentication(this HttpRequestMessage httpRequestMessage, IBearerTokenProvider rokenProvider)
+        => httpRequestMessage.WithAuthentication(new BearerAuthenticationProvider(rokenProvider));
+
+    public static HttpRequestMessage WithAuthentication(this HttpRequestMessage httpRequestMessage, IAuthenticationProvider authenticationProvider)
+        => httpRequestMessage.WithOptionOrProperty(new RequestAuthenticationOption(authenticationProvider));
+
+#if NET5_0_OR_GREATER
+    public static HttpRequestMessage WithOption<TValue>(this HttpRequestMessage httpRequestMessage, HttpRequestOptionsKey<TValue> key, TValue value)
+    {
+        httpRequestMessage.Options.Set(key, value);
+        return httpRequestMessage;
+    }
+#else
+    public static HttpRequestMessage WithProperty(this HttpRequestMessage httpRequestMessage, string key, object value)
+    {
+        httpRequestMessage.Properties[key] = value;
+        return httpRequestMessage;
+    }
+#endif
+
+    private static HttpRequestMessage WithOptionOrProperty<TRequestOption>(this HttpRequestMessage httpRequestMessage, TRequestOption requestOption)
+        where TRequestOption : IRequestOption
+    {
+#if NET5_0_OR_GREATER
+        return httpRequestMessage.WithOption(new HttpRequestOptionsKey<TRequestOption>(requestOption.Key), requestOption);
+#else
+        return httpRequestMessage.WithProperty(requestOption.Key, requestOption);
+#endif
+    }
 
     private static string? ApplyParenthesesIfMissing(string? input)
     {
