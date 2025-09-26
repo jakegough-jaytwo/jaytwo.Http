@@ -36,7 +36,7 @@ public class LoggingDelegatingHandlerTests
         using var client = HttpClientBuilder.Build(x => x
             .WithBaseAddress(HttpBinUrl)
             .WithLogger(_logger)
-            .WithTimeout(TimeSpan.FromMilliseconds(1)));
+            .WithClientTimeout(TimeSpan.FromMilliseconds(1)));
 
         // act
         await Assert.ThrowsAnyAsync<TaskCanceledException>(

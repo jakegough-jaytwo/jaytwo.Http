@@ -17,9 +17,9 @@ public class BearerAuthenticationProvider : AuthenticationProviderBase, IAuthent
     {
     }
 
-    public BearerAuthenticationProvider(Func<CancellationToken, Task<string>> tokenProvider)
+    public BearerAuthenticationProvider(Func<CancellationToken, Task<string>> tokenDelegate)
     {
-        TokenProvider = tokenProvider;
+        TokenDelegate = tokenDelegate;
     }
 
     public BearerAuthenticationProvider(IBearerTokenProvider tokenProvider)
@@ -27,11 +27,11 @@ public class BearerAuthenticationProvider : AuthenticationProviderBase, IAuthent
     {
     }
 
-    protected internal Func<CancellationToken, Task<string>> TokenProvider { get; }
+    protected internal Func<CancellationToken, Task<string>> TokenDelegate { get; }
 
     public override async Task AuthenticateAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        var token = await TokenProvider.Invoke(cancellationToken);
+        var token = await TokenDelegate.Invoke(cancellationToken);
         SetRequestAuthenticationHeader(request, "Bearer", token);
     }
 }

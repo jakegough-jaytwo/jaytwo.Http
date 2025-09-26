@@ -10,6 +10,31 @@ public static class HttpClientExtensions
     private const HttpCompletionOption DefaultHttpCompletionOption = HttpCompletionOption.ResponseContentRead;
     private const bool DefaultEnsureSuccessStatusCode = false;
 
+    public static HttpClient WithTimeout(this HttpClient httpClient, TimeSpan timeout)
+    {
+        httpClient.Timeout = timeout;
+        return httpClient;
+    }
+
+    public static HttpClient WithBaseAddress(this HttpClient httpClient, string baseAddress)
+        => WithBaseAddress(httpClient, new Uri(baseAddress, UriKind.Absolute));
+
+    public static HttpClient WithBaseAddress(this HttpClient httpClient, Uri baseAddress)
+    {
+        if (baseAddress == null)
+        {
+            throw new ArgumentNullException(nameof(baseAddress));
+        }
+
+        if (!baseAddress.IsAbsoluteUri)
+        {
+            throw new ArgumentException("BaseAddress must be absolute.", nameof(baseAddress));
+        }
+
+        httpClient.BaseAddress = baseAddress;
+        return httpClient;
+    }
+
     public static async Task<HttpResponseMessage> SendAsync(
         this HttpClient httpClient,
         Action<HttpRequestMessage> requestBuilder,

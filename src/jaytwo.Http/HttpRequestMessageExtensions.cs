@@ -11,9 +11,11 @@ using jaytwo.Http.Authentication;
 using jaytwo.Http.Formatting;
 using jaytwo.Http.Handlers;
 using jaytwo.Http.Handlers.Authentication;
+using jaytwo.Http.Handlers.Logging;
 using jaytwo.Http.Handlers.RequestTimeout;
 using jaytwo.Http.Internal;
 using jaytwo.UrlHelper;
+using Microsoft.Extensions.Logging;
 
 namespace jaytwo.Http;
 
@@ -513,30 +515,34 @@ public static class HttpRequestMessageExtensions
         => httpRequestMessage.WithAuthentication(new BearerAuthenticationProvider(rokenProvider));
 
     public static HttpRequestMessage WithAuthentication(this HttpRequestMessage httpRequestMessage, IAuthenticationProvider authenticationProvider)
-        => httpRequestMessage.WithOptionOrProperty(new RequestAuthenticationOption(authenticationProvider));
+        => httpRequestMessage.WithAuthenticationMiddleware(new AuthenticationHttpClientMiddleware(authenticationProvider));
 
-#if NET5_0_OR_GREATER
-    public static HttpRequestMessage WithOption<TValue>(this HttpRequestMessage httpRequestMessage, HttpRequestOptionsKey<TValue> key, TValue value)
+    public static HttpRequestMessage WithLogger(this HttpRequestMessage httpRequestMessage, ILogger logger)
+        => httpRequestMessage.WithLoggingMiddleware(new LoggingHttpClientMiddleware(logger));
+
+    public static HttpRequestMessage WithAuthenticationMiddleware(this HttpRequestMessage request, IHttpClientMiddleware middleware)
     {
-        httpRequestMessage.Options.Set(key, value);
-        return httpRequestMessage;
+        PerRequestHttpClientMiddleware.SetAuthenticationMiddleware(request, middleware);
+        return request;
     }
-#else
-    public static HttpRequestMessage WithProperty(this HttpRequestMessage httpRequestMessage, string key, object value)
+
+    public static HttpRequestMessage WithLoggingMiddleware(this HttpRequestMessage request, IHttpClientMiddleware middleware)
     {
-        httpRequestMessage.Properties[key] = value;
-        return httpRequestMessage;
+        PerRequestHttpClientMiddleware.SetLoggingMiddleware(request, middleware);
+        return request;
     }
-#endif
+
+    public static HttpRequestMessage AddMiddleware(this HttpRequestMessage request, IHttpClientMiddleware middleware)
+    {
+        PerRequestHttpClientMiddleware.AddCustomMiddleware(request, middleware);
+        return request;
+    }
 
     private static HttpRequestMessage WithOptionOrProperty<TRequestOption>(this HttpRequestMessage httpRequestMessage, TRequestOption requestOption)
         where TRequestOption : IRequestOption
     {
-#if NET5_0_OR_GREATER
-        return httpRequestMessage.WithOption(new HttpRequestOptionsKey<TRequestOption>(requestOption.Key), requestOption);
-#else
-        return httpRequestMessage.WithProperty(requestOption.Key, requestOption);
-#endif
+        httpRequestMessage.SetState(requestOption.Key, requestOption);
+        return httpRequestMessage;
     }
 
     private static string? ApplyParenthesesIfMissing(string? input)

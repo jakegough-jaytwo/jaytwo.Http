@@ -18,8 +18,7 @@ public class AuthenticationDelegatingHandlerTests
         var pass = "world";
 
         using var client = HttpClientBuilder.Build(builder => builder
-            .WithBaseAddress(HttpBinUrl)
-            .WithDelegatingHandler(() => new AuthenticationDelegatingHandler()));
+            .WithBaseAddress(HttpBinUrl));
 
         // act
         using var response = await client.SendAsync(
@@ -30,7 +29,7 @@ public class AuthenticationDelegatingHandlerTests
     }
 
     [Fact]
-    public async Task BasicAuth_authenticates_request()
+    public async Task Client_BasicAuth_authenticates_request()
     {
         // arrange
         var user = "hello";
@@ -38,7 +37,30 @@ public class AuthenticationDelegatingHandlerTests
 
         using var client = HttpClientBuilder.Build(builder => builder
             .WithBaseAddress(HttpBinUrl)
-            .WithDelegatingHandler(() => new AuthenticationDelegatingHandler()));
+            .WithBasicAuthentication(user, pass));
+
+        // act
+        using var response = await client.SendAsync(request => request
+            .WithUriPath("/basic-auth/{0}/{1}", user, pass));
+
+        // assert
+        var responseObject = await response
+            .EnsureSuccessStatusCode()
+            .AsAnonymousTypeAsync(new { authenticated = default(bool?), user = default(string?) });
+
+        Assert.True(responseObject.authenticated);
+        Assert.Equal(user, responseObject.user);
+    }
+
+    [Fact]
+    public async Task Request_BasicAuth_authenticates_request()
+    {
+        // arrange
+        var user = "hello";
+        var pass = "world";
+
+        using var client = HttpClientBuilder.BuildDefault()
+            .WithBaseAddress(HttpBinUrl);
 
         // act
         using var response = await client.SendAsync(request => request
@@ -60,9 +82,8 @@ public class AuthenticationDelegatingHandlerTests
         // arrange
         var token = "hello";
 
-        using var client = HttpClientBuilder.Build(builder => builder
-            .WithBaseAddress(HttpBinUrl)
-            .WithDelegatingHandler(() => new AuthenticationDelegatingHandler()));
+        using var client = HttpClientBuilder.BuildDefault()
+            .WithBaseAddress(HttpBinUrl);
 
         // act
         using var response = await client.SendAsync(request => request
