@@ -3,36 +3,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Security;
 using System.Threading;
 using jaytwo.Http.Authentication;
 using jaytwo.Http.Handlers;
 using jaytwo.Http.Handlers.Authentication;
-#if NET5_0_OR_GREATER
-using jaytwo.Http.Handlers.Polly;
-#endif
 using jaytwo.Http.Handlers.RequestTimeout;
-#if NET5_0_OR_GREATER
-using Polly;
-#endif
 
 namespace jaytwo.Http;
 
-public class HttpClientBuilder
+public partial class HttpClientBuilder
 {
     private const bool DefaultDisposeHandler = true;
 
-#if NET5_0_OR_GREATER
-    private readonly List<Action<SocketsHttpHandler>> _handlerConfigurations = new List<Action<SocketsHttpHandler>>();
-#else
-    private readonly List<Action<HttpClientHandler>> _handlerConfigurations = new List<Action<HttpClientHandler>>();
-#endif
     private readonly List<Func<HttpMessageHandler, DelegatingHandler>> _delegatingHandlerFactories = new List<Func<HttpMessageHandler, DelegatingHandler>>();
     private readonly List<Action<HttpClient>> _clientConfigurations = new List<Action<HttpClient>>();
-
-#if NET5_0_OR_GREATER
-    private readonly List<Action<ResiliencePipelineBuilder<HttpResponseMessage>>> _pollyConfigurations = new List<Action<ResiliencePipelineBuilder<HttpResponseMessage>>>();
-#endif
 
     private TimeSpan? _defaultTimeout;
     private IAuthenticationProvider? _defaultAuthenticationProvider;
@@ -101,7 +85,7 @@ public class HttpClientBuilder
     }
 
     public HttpClientBuilder WithMiddleware(Func<IHttpClientMiddleware> middlewareFactory)
-        => WithDelegatingHandler(x => new HttpMessageMiddlewareAdapter(x, middlewareFactory()));
+        => WithDelegatingHandler(x => new HttpClientMiddlewareAdapter(x, middlewareFactory()));
 
     public HttpClientBuilder WithMiddleware(IHttpClientMiddleware middleware)
         => WithMiddleware(() => middleware);
@@ -111,19 +95,6 @@ public class HttpClientBuilder
         _defaultAuthenticationProvider = authenticationProvider;
         return this;
     }
-
-#if NET5_0_OR_GREATER
-    public HttpClientBuilder WithPolly(Action<ResiliencePipelineBuilder<HttpResponseMessage>> config)
-    {
-        if (config == null)
-        {
-            throw new ArgumentNullException(nameof(config));
-        }
-
-        _pollyConfigurations.Add(config);
-        return this;
-    }
-#endif
 
     public HttpClientBuilder WithBaseAddress(string baseAddress)
         => ConfigureClient(client => client.WithBaseAddress(baseAddress));
@@ -186,25 +157,23 @@ public class HttpClientBuilder
     {
         HttpMessageHandler result = BuildPrimaryHandler();
 
-#if NET5_0_OR_GREATER
-        // first we do polly so if polly needs to retry, we log every retry if we have a logger wired up after
-        if (_pollyConfigurations.Any())
-        {
-            result = new HttpMessageMiddlewareAdapter(
-                result,
-                () => new PollyHttpClientMiddleware(config => _pollyConfigurations.ForEach(x => x(config))));
-        }
-#endif
+        // first we do Authentication since it needs to be the final mutator (closest to the transport)
+        result = new HttpClientMiddlewareAdapter(
+            result,
+            () => new RequestAuthenticationHttpMessageMiddleware(() => _defaultAuthenticationProvider));
 
-        foreach (var handlerFactory in _delegatingHandlerFactories)
+        foreach (var handlerFactory in _delegatingHandlerFactories.AsEnumerable().Reverse())
         {
             result = handlerFactory.Invoke(result);
         }
 
-        // last we do Authentication since it needs to be the final mutator
-        result = new HttpMessageMiddlewareAdapter(
-            result,
-            () => new RequestAuthenticationHttpMessageMiddleware(() => _defaultAuthenticationProvider));
+        // last we do polly, since if polly needs to retry, then it will re-authenticate and re-log every request
+        if (_pollyConfigurations.Any())
+        {
+            result = new HttpClientMiddlewareAdapter(
+                result,
+                () => BuildPollyMiddleware());
+        }
 
         return result;
     }
@@ -230,38 +199,6 @@ public class HttpClientBuilder
         return baseHandler;
     }
 
-#if NET5_0_OR_GREATER
-    public HttpClientBuilder ConfigureSslOptions(Action<SslClientAuthenticationOptions> optionsBuilder)
-        => ConfigureHandler(handler =>
-        {
-            var options = handler.SslOptions ?? new SslClientAuthenticationOptions();
-            optionsBuilder(options);
-            handler.SslOptions = options; // reassign to persist updated instance
-        });
-
-    public HttpClientBuilder WithRemoteCertificateValidationCallback(RemoteCertificateValidationCallback callback)
-    {
-        if (callback == null)
-        {
-            throw new ArgumentNullException(nameof(callback));
-        }
-
-        return ConfigureSslOptions(o => o.RemoteCertificateValidationCallback = callback);
-    }
-#else
-    public HttpClientBuilder WithRemoteCertificateValidationCallback(RemoteCertificateValidationCallback callback)
-    {
-        if (callback == null)
-        {
-            throw new ArgumentNullException(nameof(callback));
-        }
-
-        return ConfigureHandler(handler =>
-            handler.ServerCertificateCustomValidationCallback =
-                (req, cert, chain, errors) => callback(req, cert, chain, errors));
-    }
-#endif
-
     public HttpClientBuilder ConfigureClient(Action<HttpClient> configuration)
     {
         if (configuration == null)
@@ -272,50 +209,4 @@ public class HttpClientBuilder
         _clientConfigurations.Add(configuration);
         return this;
     }
-
-#if NET5_0_OR_GREATER
-    public HttpClientBuilder ConfigurePolly(Action<ResiliencePipelineBuilder<HttpResponseMessage>> configuration)
-    {
-        if (configuration == null)
-        {
-            throw new ArgumentNullException(nameof(configuration));
-        }
-
-        _pollyConfigurations.Add(configuration);
-        return this;
-    }
-#endif
-
-#if NET5_0_OR_GREATER
-    public HttpClientBuilder WithPooledConnectionLifetime(TimeSpan pooledConnectionLifetime)
-        => ConfigureHandler(handler => handler.PooledConnectionLifetime = pooledConnectionLifetime);
-
-    public HttpClientBuilder ConfigureHandler(Action<SocketsHttpHandler> configuration)
-    {
-        if (configuration == null)
-        {
-            throw new ArgumentNullException(nameof(configuration));
-        }
-
-        _handlerConfigurations.Add(configuration);
-        return this;
-    }
-
-    private static SocketsHttpHandler CreateDefaultPrimaryHandler()
-        => new SocketsHttpHandler();
-#else
-    public HttpClientBuilder ConfigureHandler(Action<HttpClientHandler> configuration)
-    {
-        if (configuration == null)
-        {
-            throw new ArgumentNullException(nameof(configuration));
-        }
-
-        _handlerConfigurations.Add(configuration);
-        return this;
-    }
-
-    private static HttpClientHandler CreateDefaultPrimaryHandler()
-        => new HttpClientHandler();
-#endif
 }

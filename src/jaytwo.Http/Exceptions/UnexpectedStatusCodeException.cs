@@ -9,18 +9,18 @@ public class UnexpectedStatusCodeException : HttpRequestException
     // TODO: ActualStatusCode, ExpectedStatusCodes
 
     public UnexpectedStatusCodeException(HttpStatusCode statusCode)
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
         : base(GetMessage(statusCode), null, statusCode)
 #else
         : base(GetMessage(statusCode))
 #endif
     {
-#if !NET5_0_OR_GREATER
+#if !NET6_0_OR_GREATER
         StatusCode = statusCode;
 #endif
     }
 
-#if !NET5_0_OR_GREATER
+#if !NET6_0_OR_GREATER
     public HttpStatusCode StatusCode { get; }
 #endif
 
