@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using jaytwo.FluentUri;
 using jaytwo.Http.Authentication;
 using jaytwo.Http.Formatting;
@@ -260,13 +261,47 @@ public static class HttpRequestMessageExtensions
     }
 
     public static HttpRequestMessage WithUri(this HttpRequestMessage httpRequestMessage, string pathOrUri, UriKind uriKild = UriKind.RelativeOrAbsolute)
-        => httpRequestMessage.WithUri(new Uri(pathOrUri, uriKild));
+    {
+        if (pathOrUri == null)
+        {
+            throw new ArgumentNullException(nameof(pathOrUri));
+        }
+
+        if (string.IsNullOrWhiteSpace(pathOrUri))
+        {
+            throw new ArgumentException("Value cannot be empty or whitespace.", nameof(pathOrUri));
+        }
+
+        return httpRequestMessage.WithUri(new Uri(pathOrUri, uriKild));
+    }
 
     public static HttpRequestMessage WithUri(this HttpRequestMessage httpRequestMessage, string pathFormat, params object[] formatArgs)
-        => httpRequestMessage.WithUri(Url.Format(pathFormat, formatArgs));
+    {
+        if (pathFormat == null)
+        {
+            throw new ArgumentNullException(nameof(pathFormat));
+        }
+
+        if (string.IsNullOrWhiteSpace(pathFormat))
+        {
+            throw new ArgumentException("Value cannot be empty or whitespace.", nameof(pathFormat));
+        }
+
+        return httpRequestMessage.WithUri(Url.Format(pathFormat, formatArgs));
+    }
 
     public static HttpRequestMessage WithUriPath(this HttpRequestMessage httpRequestMessage, string path)
     {
+        if (path == null)
+        {
+            throw new ArgumentNullException(nameof(path));
+        }
+
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Value cannot be empty or whitespace.", nameof(path));
+        }
+
         if (httpRequestMessage.RequestUri != null)
         {
             return httpRequestMessage.WithUri(httpRequestMessage.RequestUri.WithPath(path));
@@ -278,10 +313,32 @@ public static class HttpRequestMessageExtensions
     }
 
     public static HttpRequestMessage WithUriPath(this HttpRequestMessage httpRequestMessage, string pathFormat, params object[] formatArgs)
-        => httpRequestMessage.WithUriPath(Url.Format(pathFormat, formatArgs));
+    {
+        if (pathFormat == null)
+        {
+            throw new ArgumentNullException(nameof(pathFormat));
+        }
+
+        if (string.IsNullOrWhiteSpace(pathFormat))
+        {
+            throw new ArgumentException("Value cannot be empty or whitespace.", nameof(pathFormat));
+        }
+
+        return httpRequestMessage.WithUriPath(Url.Format(pathFormat, formatArgs));
+    }
 
     public static HttpRequestMessage WithUriQuery(this HttpRequestMessage httpRequestMessage, string data)
     {
+        if (data == null)
+        {
+            throw new ArgumentNullException(nameof(data));
+        }
+
+        if (string.IsNullOrWhiteSpace(data))
+        {
+            throw new ArgumentException("Value cannot be empty or whitespace.", nameof(data));
+        }
+
         if (httpRequestMessage.RequestUri != null)
         {
             return httpRequestMessage.WithUri(httpRequestMessage.RequestUri.WithQuery(data));
@@ -309,6 +366,16 @@ public static class HttpRequestMessageExtensions
 
     public static HttpRequestMessage WithUriQueryParameter(this HttpRequestMessage httpRequestMessage, string key, string? value, InclusionRule inclusionRule = InclusionRule.IncludeAlways)
     {
+        if (key == null)
+        {
+            throw new ArgumentNullException(nameof(key));
+        }
+
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            throw new ArgumentException("Value cannot be empty or whitespace.", nameof(key));
+        }
+
         if (InclusionRuleHelper.IncludeContent(value, inclusionRule))
         {
             if (httpRequestMessage.RequestUri != null)
@@ -317,7 +384,7 @@ public static class HttpRequestMessageExtensions
             }
             else
             {
-                return httpRequestMessage.WithUriQuery(new Dictionary<string, string>() { { key, value } });
+                return httpRequestMessage.WithUriQuery(new Dictionary<string, string>() { { key, value! } });
             }
         }
 
@@ -338,10 +405,20 @@ public static class HttpRequestMessageExtensions
         => httpRequestMessage.WithUriQueryParameter(key, ObjectToStringHelper.GetString(value), inclusionRule);
 
     public static HttpRequestMessage WithUriQueryParameter(this HttpRequestMessage httpRequestMessage, string key, IEnumerable<string> values, InclusionRule inclusionRule = InclusionRule.IncludeAlways)
-        => httpRequestMessage.WithUriQueryParameter(key, values?.ToArray(), inclusionRule);
+        => httpRequestMessage.WithUriQueryParameter(key, values?.ToArray()!, inclusionRule);
 
     public static HttpRequestMessage WithUriQueryParameter(this HttpRequestMessage httpRequestMessage, string key, string[] values, InclusionRule inclusionRule = InclusionRule.IncludeAlways)
     {
+        if (key == null)
+        {
+            throw new ArgumentNullException(nameof(key));
+        }
+
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            throw new ArgumentException("Value cannot be empty or whitespace.", nameof(key));
+        }
+
         if (InclusionRuleHelper.IncludeContent(values, inclusionRule))
         {
             if (httpRequestMessage.RequestUri != null)
@@ -358,10 +435,10 @@ public static class HttpRequestMessageExtensions
     }
 
     public static HttpRequestMessage WithUriQueryParameter(this HttpRequestMessage httpRequestMessage, string key, IEnumerable<object> values, InclusionRule inclusionRule = InclusionRule.IncludeAlways)
-        => httpRequestMessage.WithUriQueryParameter(key, values?.Select(x => ObjectToStringHelper.GetString(x)!), inclusionRule);
+        => httpRequestMessage.WithUriQueryParameter(key, values?.Select(x => ObjectToStringHelper.GetString(x)!)!, inclusionRule);
 
     public static HttpRequestMessage WithUriQueryParameter(this HttpRequestMessage httpRequestMessage, string key, object[] values, InclusionRule inclusionRule = InclusionRule.IncludeAlways)
-        => httpRequestMessage.WithUriQueryParameter(key, values?.Select(x => ObjectToStringHelper.GetString(x)!), inclusionRule);
+        => httpRequestMessage.WithUriQueryParameter(key, values?.Select(x => ObjectToStringHelper.GetString(x)!)!, inclusionRule);
 
     public static HttpRequestMessage WithUriQueryParameter(this HttpRequestMessage httpRequestMessage, string key, string format, object[] values, InclusionRule inclusionRule = InclusionRule.IncludeAlways)
     {
@@ -502,66 +579,50 @@ public static class HttpRequestMessageExtensions
     public static string? GetHeaderValue(this HttpRequestMessage httpRequestMessage, string key, StringComparison stringComparison)
         => httpRequestMessage.Headers.GetHeaderValue(key, stringComparison) ?? httpRequestMessage.Content?.Headers.GetHeaderValue(key, stringComparison);
 
-    public static HttpRequestMessage WithTimeout(this HttpRequestMessage httpRequestMessage, TimeSpan timeout)
-        => httpRequestMessage.WithOptionOrProperty(new RequestTimeoutOption(timeout));
-
     public static HttpRequestMessage WithBasicAuthentication(this HttpRequestMessage httpRequestMessage, string username, string password)
-        => httpRequestMessage.WithAuthentication(new BasicAuthenticationProvider(username, password));
+        => httpRequestMessage.WithAuthenticationProvider(new BasicAuthenticationProvider(username, password));
 
     public static HttpRequestMessage WithBearerAuthentication(this HttpRequestMessage httpRequestMessage, string token)
-        => httpRequestMessage.WithAuthentication(new BearerAuthenticationProvider(token));
+        => httpRequestMessage.WithAuthenticationProvider(new BearerAuthenticationProvider(token));
 
-    public static HttpRequestMessage WithBearerAuthentication(this HttpRequestMessage httpRequestMessage, IBearerTokenProvider rokenProvider)
-        => httpRequestMessage.WithAuthentication(new BearerAuthenticationProvider(rokenProvider));
+    public static HttpRequestMessage WithBearerAuthentication(this HttpRequestMessage httpRequestMessage, IBearerTokenProvider tokenProvider)
+        => httpRequestMessage.WithAuthenticationProvider(new BearerAuthenticationProvider(tokenProvider));
 
-    public static HttpRequestMessage WithAuthentication(this HttpRequestMessage httpRequestMessage, IAuthenticationProvider authenticationProvider)
-        => httpRequestMessage.WithAuthenticationMiddleware(new AuthenticationHttpClientMiddleware(authenticationProvider));
-
-    public static HttpRequestMessage WithLogger(this HttpRequestMessage httpRequestMessage, ILogger logger)
-        => httpRequestMessage.WithLoggingMiddleware(new LoggingHttpClientMiddleware(logger));
-
-    public static HttpRequestMessage WithAuthenticationMiddleware(this HttpRequestMessage request, IHttpClientMiddleware middleware)
+    public static HttpRequestMessage WithAuthenticationProvider(this HttpRequestMessage httpRequestMessage, IAuthenticationProvider authenticationProvider)
     {
-        PerRequestHttpClientMiddleware.SetAuthenticationMiddleware(request, middleware);
-        return request;
-    }
-
-    public static HttpRequestMessage WithLoggingMiddleware(this HttpRequestMessage request, IHttpClientMiddleware middleware)
-    {
-        PerRequestHttpClientMiddleware.SetLoggingMiddleware(request, middleware);
-        return request;
-    }
-
-    public static HttpRequestMessage AddMiddleware(this HttpRequestMessage request, IHttpClientMiddleware middleware)
-    {
-        PerRequestHttpClientMiddleware.AddCustomMiddleware(request, middleware);
-        return request;
-    }
-
-    private static HttpRequestMessage WithOptionOrProperty<TRequestOption>(this HttpRequestMessage httpRequestMessage, TRequestOption requestOption)
-        where TRequestOption : IRequestOption
-    {
-        httpRequestMessage.SetState(requestOption.Key, requestOption);
+        HttpRequestMessageContext.Update(httpRequestMessage, context => context.AuthenticationProvider = authenticationProvider);
         return httpRequestMessage;
     }
 
-    private static string? ApplyParenthesesIfMissing(string? input)
+    public static HttpRequestMessage WithTimeout(this HttpRequestMessage httpRequestMessage, TimeSpan? timeout)
+    {
+        HttpRequestMessageContext.Update(httpRequestMessage, context => context.Timeout = timeout);
+        return httpRequestMessage;
+    }
+
+    public static HttpRequestMessage WithMiddleware(this HttpRequestMessage httpRequestMessage, Func<IHttpClientMiddleware> middlewareFactory)
+    {
+        HttpRequestMessageContext.Update(httpRequestMessage, context => context.AddMiddleware(middlewareFactory));
+        return httpRequestMessage;
+    }
+
+    private static string ApplyParenthesesIfMissing(string input)
     {
         if (input != null && !input.StartsWith("(") && !input.EndsWith(")"))
         {
             input = $"({input})";
         }
 
-        return input;
+        return input!;
     }
 
-    private static string? ApplyQuotesIfMissing(string? input)
+    private static string ApplyQuotesIfMissing(string input)
     {
         if (input != null && !input.StartsWith("\"") && !input.EndsWith("\""))
         {
             input = $"\"{input}\"";
         }
 
-        return input;
+        return input!;
     }
 }

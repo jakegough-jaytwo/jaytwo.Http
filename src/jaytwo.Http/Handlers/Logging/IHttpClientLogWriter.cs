@@ -5,7 +5,7 @@ namespace jaytwo.Http.Handlers.Logging;
 
 public interface IHttpClientLogWriter
 {
-    IDisposable BeginLoggerScope(out Guid requestId, out string shortRequestId);
+    IDisposable? BeginLoggerScope(out Guid requestId, out string shortRequestId);
 
     void LogRequest(string shortRequestId, HttpRequestMessage request);
 

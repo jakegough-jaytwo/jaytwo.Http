@@ -6,8 +6,10 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using jaytwo.Http.Authentication;
 using jaytwo.Http.Formatting;
 using jaytwo.UrlHelper;
+using Moq;
 using Newtonsoft.Json;
 using Xunit;
 
@@ -3013,5 +3015,33 @@ public class HttpRequestMessageExtensionsTests
 
         var contentAsString = await stringContent.ReadAsStringAsync();
         Assert.Equal(someValue, contentAsString);
+    }
+
+    [Fact]
+    public void WithTimeout_sets_context_DefaultTimeout()
+    {
+        // arrange
+        var tiemout = TimeSpan.FromMinutes(72);
+        var request = new HttpRequestMessage();
+
+        // act
+        request.WithTimeout(tiemout);
+
+        // assert
+        Assert.Equal(tiemout, request.GetContext().Timeout);
+    }
+
+    [Fact]
+    public void WithAuthenticationProvider_sets_context_DefaultAuthenticationProvider()
+    {
+        // arrange
+        var authenticationProvider = new Mock<IAuthenticationProvider>().Object;
+        var request = new HttpRequestMessage();
+
+        // act
+        request.WithAuthenticationProvider(authenticationProvider);
+
+        // assert
+        Assert.Same(authenticationProvider, request.GetContext().AuthenticationProvider);
     }
 }

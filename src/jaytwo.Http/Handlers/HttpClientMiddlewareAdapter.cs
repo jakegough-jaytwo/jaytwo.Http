@@ -5,16 +5,16 @@ using System.Threading.Tasks;
 
 namespace jaytwo.Http.Handlers;
 
-public class HttpMessageMiddlewareAdapter : DelegatingHandler
+public class HttpClientMiddlewareAdapter : DelegatingHandler
 {
     private readonly Func<IHttpClientMiddleware> _middlewareFactory;
 
-    public HttpMessageMiddlewareAdapter(HttpMessageHandler innerHandler, IHttpClientMiddleware middleware)
+    public HttpClientMiddlewareAdapter(HttpMessageHandler innerHandler, IHttpClientMiddleware middleware)
         : this(innerHandler, () => middleware)
     {
     }
 
-    public HttpMessageMiddlewareAdapter(HttpMessageHandler innerHandler, Func<IHttpClientMiddleware> middlewareFactory)
+    public HttpClientMiddlewareAdapter(HttpMessageHandler innerHandler, Func<IHttpClientMiddleware> middlewareFactory)
         : base(innerHandler)
     {
         _middlewareFactory = middlewareFactory;

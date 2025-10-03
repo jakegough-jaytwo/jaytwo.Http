@@ -15,10 +15,15 @@ public class HttpClientLogWriter : IHttpClientLogWriter
 
     public HttpClientLogWriter(ILogger logger)
     {
+        if (logger == null)
+        {
+            throw new ArgumentNullException(nameof(logger));
+        }
+
         _logger = logger;
     }
 
-    public IDisposable BeginLoggerScope(out Guid requestId, out string shortRequestId)
+    public IDisposable? BeginLoggerScope(out Guid requestId, out string shortRequestId)
     {
         requestId = Guid.NewGuid();
         shortRequestId = requestId.ToString("N").Substring(0, 7);
@@ -59,7 +64,7 @@ public class HttpClientLogWriter : IHttpClientLogWriter
         var requestContentType = request.Content?.Headers.ContentType?.MediaType;
         if (!string.IsNullOrEmpty(requestContentType))
         {
-            logBuilder.AppendNew($"{{{Constants.RequestContentType}}}", requestContentType);
+            logBuilder.AppendNew($"{{{Constants.RequestContentType}}}", requestContentType!);
         }
 
         var requestContentLength = request.Content?.Headers.ContentLength;
@@ -91,7 +96,7 @@ public class HttpClientLogWriter : IHttpClientLogWriter
         var contentType = response.Content?.Headers?.ContentType?.MediaType;
         if (!string.IsNullOrEmpty(contentType))
         {
-            logBuilder.AppendNew($"{{{Constants.ResponseContentType}}}", contentType);
+            logBuilder.AppendNew($"{{{Constants.ResponseContentType}}}", contentType!);
         }
 
         var contentLength = response.Content?.Headers?.ContentLength;

@@ -7,17 +7,9 @@ namespace jaytwo.Http.Handlers.RequestTimeout;
 
 public class RequestTimeoutHttpMessageMiddleware : IHttpClientMiddleware
 {
-    public RequestTimeoutHttpMessageMiddleware(TimeSpan? defaultTimeout = default)
-        : this(() => defaultTimeout)
+    public RequestTimeoutHttpMessageMiddleware()
     {
     }
-
-    public RequestTimeoutHttpMessageMiddleware(Func<TimeSpan?> defaultTimeoutFactory)
-    {
-        DefaultTimeoutFactory = defaultTimeoutFactory;
-    }
-
-    public Func<TimeSpan?> DefaultTimeoutFactory { get; }
 
     public async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
@@ -29,8 +21,9 @@ public class RequestTimeoutHttpMessageMiddleware : IHttpClientMiddleware
             throw new ArgumentNullException(nameof(request));
         }
 
-        TryGetState(request, out var option);
-        var requestTimeout = option?.Timeout ?? DefaultTimeoutFactory();
+        var requestContext = request.GetContext();
+
+        var requestTimeout = requestContext.Timeout ?? requestContext.ClientContext.DefaultTimeout;
         if (requestTimeout == null || requestTimeout == Timeout.InfiniteTimeSpan)
         {
             return await next(request, cancellationToken).ConfigureAwait(false);
@@ -40,7 +33,4 @@ public class RequestTimeoutHttpMessageMiddleware : IHttpClientMiddleware
             .SendAsync(request, cancellationToken, next)
             .ConfigureAwait(false);
     }
-
-    private static bool TryGetState(HttpRequestMessage request, out RequestTimeoutOption? state)
-        => request.TryGetState(RequestTimeoutOption.Key, out state);
 }

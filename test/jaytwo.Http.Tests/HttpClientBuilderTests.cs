@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Security;
+using jaytwo.Http.Authentication;
 using Moq;
 using Xunit;
 
@@ -24,7 +25,7 @@ public class HttpClientBuilderTests
     }
 
     [Fact]
-    public void WithTimeout_sets_Timeout()
+    public void WithClientTimeout_sets_Client_Timeout()
     {
         // arrange
         var tiemout = TimeSpan.FromMinutes(72);
@@ -168,6 +169,34 @@ public class HttpClientBuilderTests
 
         // assert
         Assert.Same(mockHandler.Object, handler);
+    }
+
+    [Fact]
+    public void WithDefaultTimeout_sets_context_DefaultTimeout()
+    {
+        // arrange
+        var tiemout = TimeSpan.FromMinutes(72);
+        var builder = new HttpClientBuilder();
+
+        // act
+        using var client = builder.WithDefaultTimeout(tiemout).Build();
+
+        // assert
+        Assert.Equal(tiemout, client.GetContext().DefaultTimeout);
+    }
+
+    [Fact]
+    public void WithAuthenticationProvider_sets_context_DefaultAuthenticationProvider()
+    {
+        // arrange
+        var authenticationProvider = new Mock<IAuthenticationProvider>().Object;
+        var builder = new HttpClientBuilder();
+
+        // act
+        using var client = builder.WithAuthenticationProvider(authenticationProvider).Build();
+
+        // assert
+        Assert.Same(authenticationProvider, client.GetContext().DefaultAuthenticationProvider);
     }
 
     [Fact(Skip = "TODO")]

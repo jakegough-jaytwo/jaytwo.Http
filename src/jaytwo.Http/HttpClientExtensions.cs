@@ -76,6 +76,10 @@ public static class HttpClientExtensions
         CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestMessage();
+
+        var clientContext = httpClient.GetContext();
+        HttpRequestMessageContext.Save(request, new HttpRequestMessageContext(clientContext));
+
         await requestBuilder.Invoke(request).ConfigureAwait(false);
 
         var response = await httpClient.SendAsync(request, completionOption, cancellationToken).ConfigureAwait(false);

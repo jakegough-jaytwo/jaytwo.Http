@@ -81,10 +81,10 @@ public static class HttpResponseMessageExtensions
         throw new UnexpectedStatusCodeException(response.StatusCode);
     }
 
-    public static async Task<T> AsAnonymousTypeAsync<T>(this Task<HttpResponseMessage> httpResponseTask, T anonymousPrototype)
+    public static async Task<T?> AsAnonymousTypeAsync<T>(this Task<HttpResponseMessage> httpResponseTask, T anonymousPrototype)
         => await (await httpResponseTask.ConfigureAwait(false)).AsAnonymousTypeAsync<T>(anonymousPrototype);
 
-    public static async Task<T> AsAnonymousTypeAsync<T>(this HttpResponseMessage httpResponse, T anonymousPrototype)
+    public static async Task<T?> AsAnonymousTypeAsync<T>(this HttpResponseMessage httpResponse, T anonymousPrototype)
         => await httpResponse.AsAsync<T>();
 
     public static async Task<byte[]> AsByteArrayAsync(this Task<HttpResponseMessage> httpResponseTask)
@@ -118,10 +118,15 @@ public static class HttpResponseMessageExtensions
         }
     }
 
-    public static async Task<T> AsAsync<T>(this HttpResponseMessage httpResponse)
+    public static async Task<T?> AsAsync<T>(this HttpResponseMessage httpResponse)
     {
+        if (httpResponse == null)
+        {
+            throw new ArgumentNullException(nameof(httpResponse));
+        }
+
         var isJson = false;
-        var contentType = httpResponse?.Content?.Headers?.ContentType;
+        var contentType = httpResponse.Content?.Headers?.ContentType;
 
         var asString = default(string);
         if (ContentTypeEvaluator.IsJsonMediaType(contentType))
@@ -141,13 +146,13 @@ public static class HttpResponseMessageExtensions
 
         if (isJson)
         {
-            return JsonSerializer.Deserialize<T>(asString);
+            return JsonSerializer.Deserialize<T>(asString!);
         }
 
         throw new InvalidOperationException("Data must be JSON to automatically deserialize.");
     }
 
-    public static async Task<T> AsAsync<T>(this Task<HttpResponseMessage> httpResponseTask)
+    public static async Task<T?> AsAsync<T>(this Task<HttpResponseMessage> httpResponseTask)
         => await (await httpResponseTask.ConfigureAwait(false)).AsAsync<T>();
 
     public static async Task<T> ParseWithAsync<T>(this HttpResponseMessage httpResponse, Func<string, T> parseDelegate)
@@ -159,9 +164,9 @@ public static class HttpResponseMessageExtensions
     public static async Task<T> ParseWithAsync<T>(this Task<HttpResponseMessage> httpResponseTask, Func<string, T> parseDelegate)
         => await (await httpResponseTask.ConfigureAwait(false)).ParseWithAsync<T>(parseDelegate);
 
-    public static string GetHeaderValue(this HttpResponseMessage httpResponseMessage, string key)
+    public static string? GetHeaderValue(this HttpResponseMessage httpResponseMessage, string key)
         => httpResponseMessage.Headers.GetHeaderValue(key) ?? httpResponseMessage.Content?.Headers.GetHeaderValue(key);
 
-    public static string GetHeaderValue(this HttpResponseMessage httpResponseMessage, string key, StringComparison stringComparison)
+    public static string? GetHeaderValue(this HttpResponseMessage httpResponseMessage, string key, StringComparison stringComparison)
         => httpResponseMessage.Headers.GetHeaderValue(key, stringComparison) ?? httpResponseMessage.Content?.Headers.GetHeaderValue(key, stringComparison);
 }
