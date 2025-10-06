@@ -1,15 +1,108 @@
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using jaytwo.Http.Wrappers;
 
 namespace jaytwo.Http;
 
 public static class HttpClientExtensions
 {
-    public static IHttpClient Wrap(this HttpClient httpClient)
-        => new HttpClientWrapper(httpClient);
+    private const HttpCompletionOption DefaultHttpCompletionOption = HttpCompletionOption.ResponseContentRead;
+    private const bool DefaultEnsureSuccessStatusCode = false;
+
+    public static HttpClient WithTimeout(this HttpClient httpClient, TimeSpan timeout)
+    {
+        httpClient.Timeout = timeout;
+        return httpClient;
+    }
+
+    public static HttpClient WithBaseAddress(this HttpClient httpClient, string baseAddress)
+        => WithBaseAddress(httpClient, new Uri(baseAddress, UriKind.Absolute));
+
+    public static HttpClient WithBaseAddress(this HttpClient httpClient, Uri baseAddress)
+    {
+        if (baseAddress == null)
+        {
+            throw new ArgumentNullException(nameof(baseAddress));
+        }
+
+        if (!baseAddress.IsAbsoluteUri)
+        {
+            throw new ArgumentException("BaseAddress must be absolute.", nameof(baseAddress));
+        }
+
+        httpClient.BaseAddress = baseAddress;
+        return httpClient;
+    }
+
+    public static async Task<HttpResponseMessage> SendAsync(
+        this HttpClient httpClient,
+        Action<HttpRequestMessage> requestBuilder,
+        CancellationToken cancellationToken)
+        => await SendAsync(
+            httpClient,
+            requestBuilder: ToAsyncMethod(requestBuilder),
+            cancellationToken: cancellationToken);
+
+    public static async Task<HttpResponseMessage> SendAsync(
+        this HttpClient httpClient,
+        Action<HttpRequestMessage> requestBuilder,
+        HttpCompletionOption completionOption = DefaultHttpCompletionOption,
+        bool ensureSuccessStatusCode = DefaultEnsureSuccessStatusCode,
+        CancellationToken cancellationToken = default)
+        => await SendAsync(
+            httpClient,
+            requestBuilder: ToAsyncMethod(requestBuilder),
+            completionOption: completionOption,
+            ensureSuccessStatusCode: ensureSuccessStatusCode,
+            cancellationToken: cancellationToken);
+
+    public static async Task<HttpResponseMessage> SendAsync(
+        this HttpClient httpClient,
+        Func<HttpRequestMessage, Task> requestBuilder,
+        CancellationToken cancellationToken)
+        => await SendAsync(
+            httpClient,
+            requestBuilder,
+            completionOption: DefaultHttpCompletionOption,
+            ensureSuccessStatusCode: DefaultEnsureSuccessStatusCode,
+            cancellationToken: cancellationToken);
+
+    public static async Task<HttpResponseMessage> SendAsync(
+        this HttpClient httpClient,
+        Func<HttpRequestMessage, Task> requestBuilder,
+        HttpCompletionOption completionOption = DefaultHttpCompletionOption,
+        bool ensureSuccessStatusCode = DefaultEnsureSuccessStatusCode,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new HttpRequestMessage();
+
+        var clientContext = httpClient.GetContext();
+        HttpRequestMessageContext.Save(request, new HttpRequestMessageContext(clientContext));
+
+        await requestBuilder.Invoke(request).ConfigureAwait(false);
+
+        var response = await httpClient.SendAsync(request, completionOption, cancellationToken).ConfigureAwait(false);
+        if (ensureSuccessStatusCode)
+        {
+            try
+            {
+                response.EnsureSuccessStatusCode();
+            }
+            catch
+            {
+                response.Dispose();
+                throw;
+            }
+        }
+
+        return response;
+    }
+
+    private static Func<T, Task> ToAsyncMethod<T>(Action<T> requestBuilder)
+        => request =>
+        {
+            requestBuilder.Invoke(request);
+            return Task.CompletedTask;
+        };
 }
