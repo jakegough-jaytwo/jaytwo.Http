@@ -32,4 +32,7 @@ internal static class HttpRequestMessageStateExtensions
 
     public static HttpRequestMessageContext GetContext(this HttpRequestMessage request)
         => HttpRequestMessageContext.GetContext(request);
+
+    public static void SetupContext(this HttpRequestMessage request, HttpClientContext? clientContext)
+        => HttpRequestMessageContext.SetupContext(request, clientContext);
 }

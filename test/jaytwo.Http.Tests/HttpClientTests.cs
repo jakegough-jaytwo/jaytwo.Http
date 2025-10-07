@@ -30,7 +30,7 @@ namespace jaytwo.Http.Tests
             // arrange
 
             // act
-            var response = await _httpClient.SendAsync(request =>
+            using var response = await _httpClient.SendAsync(request =>
             {
                 request
                     .WithMethod(HttpMethod.Get)
@@ -38,6 +38,32 @@ namespace jaytwo.Http.Tests
                     .WithHeader("foo", "bar")
                     .WithHeader("fizz", "buzz");
             });
+
+            // assert
+            var prototype = new
+            {
+                headers = default(Dictionary<string, string>),
+            };
+
+            response.EnsureSuccessStatusCode();
+
+            var expected = await response.AsAnonymousTypeAsync(prototype);
+            Assert.Equal("bar", expected.headers!["Foo"]); // don't ask me why, header keys get capitalized
+            Assert.Equal("buzz", expected.headers!["Fizz"]); // don't ask me why, header keys get capitalized
+        }
+
+        [Fact]
+        public async Task RequestHeaders_Works_on_HttpClient_SendAsync_without_extensions()
+        {
+            // arrange
+            var request = new HttpRequestMessage()
+                .WithMethod(HttpMethod.Get)
+                .WithUri("/headers")
+                .WithHeader("foo", "bar")
+                .WithHeader("fizz", "buzz");
+
+            // act
+            using var response = await _httpClient.SendAsync(request);
 
             // assert
             var prototype = new
