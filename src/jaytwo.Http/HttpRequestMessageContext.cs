@@ -14,12 +14,12 @@ internal class HttpRequestMessageContext
 
     private readonly List<Func<IHttpClientMiddleware>> _middlewareFactories = new();
 
-    public HttpRequestMessageContext(HttpClientContext clientContext)
+    public HttpRequestMessageContext(HttpClientContext? clientContext)
     {
         ClientContext = clientContext;
     }
 
-    public HttpClientContext ClientContext { get; }
+    public HttpClientContext? ClientContext { get; private set; }
 
     public IAuthenticationProvider? AuthenticationProvider { get; set; }
 
@@ -39,17 +39,35 @@ internal class HttpRequestMessageContext
         => request.TryGetState(Key, out result);
 
     public static HttpRequestMessageContext GetContext(HttpRequestMessage request)
+        => SetupContext(request, null);
+
+    public static HttpRequestMessageContext SetupContext(HttpRequestMessage request, HttpClientContext? clientContext)
     {
         lock (request)
         {
             if (!TryLoad(request, out var context))
             {
-                context = new HttpRequestMessageContext(clientContext: null!); // TODO: should we just throw if there's no client context?
+                context = new HttpRequestMessageContext(clientContext);
+                Save(request, context);
+            }
+            else if (clientContext != null)
+            {
+                context!.SetupClientContext(clientContext);
                 Save(request, context);
             }
 
             return context!;
         }
+    }
+
+    public void SetupClientContext(HttpClientContext? clientContext)
+    {
+        if (ClientContext != null)
+        {
+            throw new Exception("ClientContext is already setup");
+        }
+
+        ClientContext = clientContext;
     }
 
     public ImmutableArray<Func<IHttpClientMiddleware>> GetAllMiddlewares()

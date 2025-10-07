@@ -53,8 +53,12 @@ public partial class HttpClientBuilder
     public HttpClient Build(bool disposeHandler = DefaultDisposeHandler)
     {
         // TODO: this is kind of sneaky since we're including _some_ defaults with just the pipeline
-        var handlerPipeline = BuildHandlerPipeline();
+
+        var httpClientAccessor = new HttpClientAccessor();
+        var handlerPipeline = BuildHandlerPipeline(httpClientAccessor);
         var httpClient = new HttpClient(handlerPipeline, disposeHandler);
+        httpClientAccessor.SetHttpClientContext(httpClient);
+
         _clientConfigurations.ForEach(x => x(httpClient));
 
         var clientContext = BuildContext();
@@ -148,7 +152,7 @@ public partial class HttpClientBuilder
     public HttpClientBuilder WithAutomaticDecompression(DecompressionMethods automaticDecompression)
         => ConfigureHandler(handler => handler.AutomaticDecompression = automaticDecompression);
 
-    public HttpMessageHandler BuildHandlerPipeline()
+    public HttpMessageHandler BuildHandlerPipeline(IHttpClientAccessor? httpClientAccessor = null)
     {
         HttpMessageHandler result = BuildPrimaryHandler();
 
@@ -156,6 +160,9 @@ public partial class HttpClientBuilder
         {
             result = handlerFactory.Invoke(result);
         }
+
+        // very last handler in the chain sets up the HttpClientAccessor (and adds client context to the request context)
+        result = new HttpClientAccessorHandler(result, httpClientAccessor);
 
         return result;
     }

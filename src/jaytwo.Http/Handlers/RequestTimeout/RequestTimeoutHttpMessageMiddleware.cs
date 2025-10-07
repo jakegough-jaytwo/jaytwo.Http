@@ -23,7 +23,7 @@ public class RequestTimeoutHttpMessageMiddleware : IHttpClientMiddleware
 
         var requestContext = request.GetContext();
 
-        var requestTimeout = requestContext.Timeout ?? requestContext.ClientContext.DefaultTimeout;
+        var requestTimeout = requestContext.Timeout ?? requestContext.ClientContext?.DefaultTimeout;
         if (requestTimeout == null || requestTimeout == Timeout.InfiniteTimeSpan)
         {
             return await next(request, cancellationToken).ConfigureAwait(false);

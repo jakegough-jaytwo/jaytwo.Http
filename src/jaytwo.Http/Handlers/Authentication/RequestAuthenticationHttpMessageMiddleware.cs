@@ -23,7 +23,7 @@ public class RequestAuthenticationHttpMessageMiddleware : IHttpClientMiddleware
 
         var context = request.GetContext();
 
-        var authenticationProvider = context.AuthenticationProvider ?? context.ClientContext.DefaultAuthenticationProvider;
+        var authenticationProvider = context.AuthenticationProvider ?? context.ClientContext?.DefaultAuthenticationProvider;
         if (authenticationProvider == null)
         {
             return await next(request, cancellationToken).ConfigureAwait(false);

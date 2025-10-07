@@ -3037,6 +3037,7 @@ public class HttpRequestMessageExtensionsTests
         // arrange
         var authenticationProvider = new Mock<IAuthenticationProvider>().Object;
         var request = new HttpRequestMessage();
+        request.SetupContext(clientContext: null);
 
         // act
         request.WithAuthenticationProvider(authenticationProvider);
